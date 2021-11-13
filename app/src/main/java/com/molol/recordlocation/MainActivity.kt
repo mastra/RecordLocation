@@ -20,7 +20,7 @@ class MainActivity : ComponentActivity() {
             RecordLocationTheme {
                 // A surface container using the 'background' color from the theme
 
-                    Content( onStartButton, onStopButton)
+                    Content(  ::onStartButton, ::onStopButton)
 
             }
         }
