@@ -37,7 +37,7 @@ class LocationService : Service() {
     private val mNotificationId=123
 
     private fun generateForegroundNotificacion() {
-        if (Build.VERSION.SDK_INT>=Build.VERSION_CODES.O) {
+        //if (Build.VERSION.SDK_INT>=Build.VERSION_CODES.O) {
             val intentMainLanding = Intent( this, MainActivity::class.java)
             val pendingIntent = PendingIntent.getActivity(this, 0, intentMainLanding, 0)
             iconNotification = BitmapFactory.decodeResource(resources, R.mipmap.ic_launcher)
@@ -74,6 +74,6 @@ class LocationService : Service() {
             startForeground(mNotificationId, notification)
 
 
-         }
+         //}
     }
 }
