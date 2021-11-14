@@ -28,13 +28,13 @@ class MainActivity : ComponentActivity() {
             RecordLocationTheme {
                 // A surface container using the 'background' color from the theme
 
-                    Content( statusTxt, ::onStartButton, ::onStopButton)
+                    Content( statusTxt, ::onStartButton, ::onStopButton, ::checkIfServiceIsRunning)
 
             }
         }
-   //     Handler().postDelayed({
+        Handler().postDelayed({
             checkIfServiceIsRunning()
-   //     },100)
+        },100)
     }
 
     fun onStartButton() {
@@ -44,7 +44,7 @@ class MainActivity : ComponentActivity() {
 
     fun onStopButton() {
         startService( Intent(this,LocationService::class.java).apply {
-            action = ACTION_STOP
+            action = ACTION_STOP_FOREGROUND
         })
         statusTxt.value = "Stoped"
     }
@@ -71,7 +71,7 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun Content( statusTxt: MutableState<String>, onStart: ()->Unit, onStop: ()->Unit ) {
+fun Content( statusTxt: MutableState<String>, onStart: ()->Unit, onStop: ()->Unit , onCheck: ()->Unit) {
 
     Surface(color = MaterialTheme.colors.background) {
         Scaffold() {
@@ -85,6 +85,10 @@ fun Content( statusTxt: MutableState<String>, onStart: ()->Unit, onStop: ()->Uni
                 Spacer(modifier = Modifier.height(40.dp))
                 Button(onClick = { onStop() }) {
                     Text("Stop")
+                }
+                Spacer(modifier = Modifier.height(40.dp))
+                Button(onClick = { onCheck() }) {
+                    Text("Check")
                 }
                 Spacer(modifier = Modifier.height(40.dp))
                 Text(statusTxt.value)
@@ -101,6 +105,6 @@ fun Content( statusTxt: MutableState<String>, onStart: ()->Unit, onStop: ()->Uni
 fun DefaultPreview() {
     RecordLocationTheme {
 
-        Content( mutableStateOf("preview"),{} , {})
+        Content( mutableStateOf("preview"),{} , {}, {})
     }
 }
