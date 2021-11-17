@@ -3,8 +3,6 @@ package com.molol.recordlocation
 import android.Manifest
 import android.annotation.SuppressLint
 import android.app.ActivityManager
-import android.content.Context
-import android.content.Intent
 import android.os.Bundle
 import android.os.Handler
 import androidx.activity.ComponentActivity
@@ -21,12 +19,12 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.molol.recordlocation.ui.theme.RecordLocationTheme
 import android.R
-import android.content.DialogInterface
-
-import com.google.android.material.snackbar.Snackbar
+import android.content.*
 
 import android.content.pm.PackageManager
+import android.location.Location
 import android.net.Uri
+import android.os.IBinder
 import android.provider.Settings
 import android.util.Log
 import android.view.View
@@ -34,12 +32,53 @@ import android.view.View
 import androidx.annotation.NonNull
 
 import androidx.core.app.ActivityCompat
-
-
+import androidx.lifecycle.Observer
+import com.molol.recordlocation.LocationService.Companion.TAG
 
 
 class MainActivity : ComponentActivity() {
     var statusTxt = mutableStateOf("")
+
+    var locationService : LocationService? = null
+
+    val observer = Observer<Location> {
+        Log.d(TAG, "location: ${it.latitude} , ${it.longitude} \n")
+    }
+    private val locationServiceConnection = object : ServiceConnection {
+        override fun onServiceConnected(name: ComponentName, service: IBinder) {
+            val binder = service as LocationService.LocalBinder
+            locationService = binder.service
+            locationService?.let {
+                if (it.liveLocation.hasActiveObservers() ) {
+                    it.liveLocation.removeObserver(observer)
+                }
+                it.liveLocation.observe(this@MainActivity, observer)
+            }
+        }
+        override fun onServiceDisconnected(name: ComponentName) {
+            Log.d(TAG, "onservice disconnected")
+            locationService?.let {
+                it.liveLocation.removeObserver(observer)
+            }
+            locationService = null
+        }
+
+
+    }
+
+    override fun onStart() {
+        super.onStart()
+        val serviceIntent = Intent(this, LocationService::class.java)
+        bindService(serviceIntent, locationServiceConnection, Context.BIND_AUTO_CREATE)
+
+    }
+
+    override fun onStop() {
+        super.onStop()
+        unbindService(locationServiceConnection)
+    }
+
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {

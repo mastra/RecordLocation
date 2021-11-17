@@ -8,12 +8,14 @@ import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.location.Location
+import android.os.Binder
 import android.os.Build
 import android.os.IBinder
 import android.os.Looper
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.MutableLiveData
 import com.google.android.gms.location.*
 import java.util.concurrent.TimeUnit
 
@@ -23,8 +25,8 @@ class LocationService : Service() {
 
     lateinit var fusedLocationClient : FusedLocationProviderClient
     lateinit var locationRequest : LocationRequest
-    private var currentLocation: Location? = null
-
+    //private var currentLocation: Location? = null
+    var liveLocation = MutableLiveData<Location>()
 
     private var iconNotification: Bitmap? = null
     //private var notification: Notification? = null
@@ -34,10 +36,10 @@ class LocationService : Service() {
     val locationCallback = object : LocationCallback() {
         override fun onLocationResult(locationResult: LocationResult) {
             super.onLocationResult(locationResult)
-            currentLocation = locationResult.lastLocation
-            currentLocation?.let {
-                Log.d("LOCATION", "LOCATION: lat: ${it.latitude}, ${it.longitude}")
-            }
+            liveLocation.value = locationResult.lastLocation
+//            currentLocation?.let {
+//                Log.d("LOCATION", "LOCATION: lat: ${it.latitude}, ${it.longitude}")
+//            }
 
 //            val intent = Intent(ACTION_FOREGROUND_ONLY_LOCATION_BROADCAST)
 //            intent.putExtra(EXTRA_LOCATION, currentLocation)
@@ -52,22 +54,36 @@ class LocationService : Service() {
 //            }
         }
     }
+    private val localBinder = LocalBinder()
+    inner class LocalBinder : Binder() {
+        internal val service: LocationService
+            get() = this@LocationService
+    }
 
+    override fun onBind(intent: Intent): IBinder {
+        Log.d(TAG, "onBind()")
+        return localBinder
+    }
 
+    override fun onRebind(intent: Intent) {
+        Log.d(TAG, "onRebind()")
+        super.onRebind(intent)
+    }
 
-    override fun onBind(intent: Intent): IBinder? {
-        return null
+    override fun onUnbind(intent: Intent): Boolean {
+        Log.d(TAG, "onUnbind()")
+        return true
     }
 
     override fun onCreate() {
         super.onCreate()
-        Log.d("LOCATION", "onCreate Service")
+        Log.d(TAG, "onCreate Service")
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
 
         locationRequest = LocationRequest.create().apply {
-            interval = TimeUnit.SECONDS.toMillis(60)
-            fastestInterval = TimeUnit.SECONDS.toMillis(30)
-            maxWaitTime = TimeUnit.MINUTES.toMillis(2)
+            interval = TimeUnit.SECONDS.toMillis(2)
+            fastestInterval = TimeUnit.SECONDS.toMillis(1)
+            maxWaitTime = TimeUnit.SECONDS.toMillis(15)
 
             priority = LocationRequest.PRIORITY_HIGH_ACCURACY
         }
@@ -151,5 +167,9 @@ class LocationService : Service() {
                 print("Failed to remove Location Callback.")
             }
         }
+    }
+
+    companion object {
+        const val TAG = "__LOCATION_SERVICE__"
     }
 }
