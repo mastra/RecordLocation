@@ -57,9 +57,7 @@ class MainActivity : ComponentActivity() {
         }
         override fun onServiceDisconnected(name: ComponentName) {
             Log.d(TAG, "onservice disconnected")
-            locationService?.let {
-                it.liveLocation.removeObserver(observer)
-            }
+
             locationService = null
         }
 
@@ -75,7 +73,11 @@ class MainActivity : ComponentActivity() {
 
     override fun onStop() {
         super.onStop()
+        Log.d(TAG, "onStop")
         unbindService(locationServiceConnection)
+        locationService?.let {
+            it.liveLocation.removeObserver(observer)
+        }
     }
 
 
